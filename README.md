@@ -1,18 +1,32 @@
-# REB
+# React/Redux Intermediate final class
 
-We'll use a starter kit for the final class. In this instance it's a fairly simple kit that let's us work with server-side rendering. We'll also add some drag-and-drop, very simple animation, and a bit of redux-form.
+**Server-side rendering and boilerplate/starter kits**
+
+Here are the notes for the final class.
+
+We'll use the [redux-easy-boilerplate](https://github.com/anorudes/redux-easy-boilerplate.git) to get a head start. I'll take you through the kit and explain what it does.
 
 First, clone the app, `cd` into the folder, and run `npm install`. You'll also need to instal nodemon and concurrently:
 
 ```sh
+git clone https://github.com/anorudes/redux-easy-boilerplate.git reb && cd reb
+npm install
 npm i -g nodemon concurrently
+```
+
+This kit is under heavy development. These notes are current as of commit 5bcac18a9b90dd8363ad1277b2ac96cee8d5e1cd. You might want to check it out just to make sure you have the same code:
+
+```sh
+git checkout 5bcac18a9b90dd8363ad1277b2ac96cee8d5e1cd
 ```
 
 Now we can run the sample app. First we'll start the API server in one terminal tab:
 
 ```sh
-npm run api-mon
+npm run api-debug
 ```
+
+This runs the api on [localhost:3030/api/posts](http://localhost:3030/api/posts) and a debugger on [localhost:5858](http://localhost:5858/).
 
 Then, in a second tab, we'll start the development server:
 
@@ -20,7 +34,13 @@ Then, in a second tab, we'll start the development server:
 npm start
 ```
 
-We can go to [http://localhost:3030/api/posts](http://localhost:3030/api/posts) to see the output of the API server, and [http://localhost:3000/](http://localhost:3000/) to see the application itself.
+This runs the app on [localhost:3000/](http://localhost:3000/). Finally, we can open a third terminal tab and run the tests in watch mode:
+
+```sh
+npm run test:watch
+```
+
+This will rerun the test anytime we save changes to a file.
 
 From the application page, open the Page Source to look at the HTML sent from the server. You should see something like this in the `<body>`:
 
@@ -30,9 +50,12 @@ From the application page, open the Page Source to look at the HTML sent from th
 <script>
   window.__INITIAL_STATE__ = {};
 </script>
+
+<script src="http://localhost:3000/dist/vendor.js"></script>
+<script src="http://localhost:3000/dist/main.js"></script>
 ```
 
-The page loads React in a bundle called `main.js`, and then React renders itself into the above `<div>` element. This happens *after* the page loads.
+The page loads our app in a bundle called `main.js`, and then React renders the app into the above `<div>` element. This happens *after* the page loads.
 
 Now stop the dev server with Ctrl-c and start the server-side-rendering version:
 
@@ -40,21 +63,24 @@ Now stop the dev server with Ctrl-c and start the server-side-rendering version:
 npm run start-ssr
 ```
 
-Reload the page source and you'll see this instead:
+Reload the page source and you'll see this in the `<body>` element instead:
 
 ```html
-<div id="root"><section data-reactroot="" data-reactid="1" data-react-checksum="-1301760188"><!-- react-empty: 2 --><div class="header" data-reactid="3"><ul class="header__menu" data-reactid="4"><li data-reactid="5"><a href="/posts" data-reactid="6">Posts</a></li><li data-reactid="7"><a href="/about" data-reactid="8">About</a></li><li data-reactid="9"><a href="/async-example" data-reactid="10">Async page example</a></li></ul></div><section class="posts" data-reactid="11"><!-- react-empty: 12 --><h1 data-reactid="13">Posts page</h1><div class="posts__list" data-reactid="14"></div></section></section></div>
+<div id="root"><section data-reactroot="" data-reactid="1" data-react-checksum="-554999873"><!-- react-empty: 2 --><div class="header" data-reactid="3"><ul class="header__menu" data-reactid="4"><li data-reactid="5"><a href="/posts" data-reactid="6">Posts</a></li><li data-reactid="7"><a href="/about" data-reactid="8">About</a></li><li data-reactid="9"><a href="/async-example" data-reactid="10">Async page example</a></li></ul></div><section class="posts" data-reactid="11"><!-- react-empty: 12 --><h1 data-reactid="13">Posts page</h1><div class="posts__list" data-reactid="14"><div class="post__item" data-reactid="15"><!-- react-text: 16 -->1<!-- /react-text --><!-- react-text: 17 -->) <!-- /react-text --><!-- react-text: 18 -->example 1<!-- /react-text --></div><div class="post__item" data-reactid="19"><!-- react-text: 20 -->2<!-- /react-text --><!-- react-text: 21 -->) <!-- /react-text --><!-- react-text: 22 -->example 2<!-- /react-text --></div><div class="post__item" data-reactid="23"><!-- react-text: 24 -->3<!-- /react-text --><!-- react-text: 25 -->) <!-- /react-text --><!-- react-text: 26 -->example 3<!-- /react-text --></div></div></section></section></div>
 
 <script>
-  window.__INITIAL_STATE__ = {"app":{"spinnerAsyncPage":false},"posts":{"items":[],"posts":[{"id":"1","text":"example 1"},{"id":"2","text":"example 2"},{"id":"3","text":"example 3"}]}};
+  window.__INITIAL_STATE__ = {"app":{"spinnerAsyncPage":false},"posts":{"items":[{"id":"1","text":"example 1"},{"id":"2","text":"example 2"},{"id":"3","text":"example 3"}]}};
 </script>
+
+<script src="http://localhost:3001/dist/vendor.js"></script>
+<script src="http://localhost:3001/dist/main.js"></script>
 ```
 
 Note that the HTML for the page has already been rendered, and that the data needed has been added to a global variable called `__INITIAL_STATE__`. This means no waiting on the client side: the page renders immediately upon loading. When the React bundle(s) finish loading, React takes over and from there on out the application becomes a single-page application (SPA).
 
-Server-side rendering like this using mostly the same code that's used to build the components on the client side is called "Universal JavaScript" (or, sometimes, "isomorphic JavaScript"). The Universal name is easier to remember and understand, and seems to be catching on quickly.
+Server-side rendering like this using mostly the same code that's used to build the components on the client side is called "Universal JavaScript" (or, sometimes, "Isomorphic JavaScript"). The Universal name is easier to remember and understand, and seems to be catching on quickly.
 
-Now let's take a run through the code and see where everything is.
+Shut the server-side rendering mode off with `Control-c` and then restart the dev server with `npm start`. Now let's take a run through the code and see where everything is.
 
 In the folder structure the first folder is called `api` and holds the code for the Express server used to produce the JSON REST API on port 3030.
 
@@ -64,18 +90,21 @@ The server code is located in the `api/index.js` file. Here's what it does:
 
     ```js
     import Express from 'express';
+    import http from 'http';
+
     const app = new Express();
     const server = new http.Server(app);
     ```
 
-2. Next we use `morgan` for logging. We import it and `fs`
- for use with the filesystem. We set the path to the logs, create a write stream that appends to the log file (the 'a' flag), and then add the logger as middleware to Express, telling it to combine the standard and error outputs into one log:
+2. Next we use `morgan` for logging. We import it and `fs` for use with the filesystem. We set the path to the logs, create a write stream that appends to the log file (the 'a' flag), and then add the logger as middleware to Express, telling it to combine the standard and error outputs into one log:
 
      ```js
      import morgan from 'morgan';
      import fs from 'fs';
+
      const logPath = __dirname + '/../logs/api.log';
      const accessLogStream = fs.createWriteStream(logPath, { flags: 'a' });
+
      app.use(morgan('combined', { stream: accessLogStream }));
      ```
 
@@ -83,6 +112,7 @@ The server code is located in the `api/index.js` file. Here's what it does:
 
     ```js
     import bodyParser from 'body-parser';
+
     app.use(bodyParser.urlencoded({
       extended: false
     }));
@@ -93,6 +123,7 @@ The server code is located in the `api/index.js` file. Here's what it does:
 
     ```js
     import cors from 'cors';
+
     app.use(cors());
     ```
 
@@ -100,6 +131,7 @@ The server code is located in the `api/index.js` file. Here's what it does:
 
     ```js
     import helmet from 'helmet';
+
     app.use(helmet());
     ```
 
@@ -107,6 +139,7 @@ The server code is located in the `api/index.js` file. Here's what it does:
 
     ```js
     import cookieParser from 'cookie-parser';
+
     app.use(cookieParser());
     ```
 
@@ -114,10 +147,11 @@ The server code is located in the `api/index.js` file. Here's what it does:
 
     ```js
     import routes from './routes.js';
+
     app.use(routes);
     ```
 
-8. We also let Express now that we're behind a proxy server and to trust the X-Forwarded headers:
+8. We also let Express know that we're behind a proxy server and to trust the `X-Forwarded-*` headers: "Although the app will not fail to run if the application variable trust proxy is not set, it will incorrectly register the proxy’s IP address as the client IP address unless trust proxy is configured."
 
     ```js
     app.set('trust proxy', 1);
@@ -158,7 +192,7 @@ export default [
 ];
 ```
 
-Now we'll need to add a file in the `/api/routes` folder. We can use the `/api/routes/posts.js` file as a guide:
+Now we'll need to add our route files in the `/api/routes` folder. We can use the `/api/routes/posts.js` file as a guide:
 
 ```js
 import Express from 'express';
@@ -181,7 +215,7 @@ export default [
 
 We're using [express-async-wrap](https://github.com/Greenfields/express-async-wrap) which gives us JavaScript 2016 (the *next* standard) `async` superpowers. We create an instance of the Express.Router, then add a `GET` route to `/api/posts` and return some JSON (elided for convenience).
 
-So we can make one for cards at `/api/routes/cards.js`:
+So we can make one for cards at `/api/routes/cards.js`. Let's add a route to GET an individual card as well.
 
 ```js
 // api/routes/cards.js
@@ -212,7 +246,9 @@ export default [
 ];
 ```
 
-And another for topics:
+Conveniently, `ramda` is already installed. We'll use the `filter` method to grab the rows with the passed in `id`, then the `head` method to grab the first item in the returned array. Of course, there should be only one item with that `id`. The `:id` parameter is passed in by Express as `req.params.id`, but remember that it's a string, so we'll need to parse it to a base 10 integer with `parseInt`. If we find the card, we return it as `json` using the object shorthand (instead of `{ card: card }` we can do simply `{ card }` and get the same result). If we don't find the card, then we'll return a 404 Not Found.
+
+And another route file for  the topics:
 
 ```js
 // api/routes/topics.js
@@ -243,11 +279,161 @@ export default [
 ];
 ```
 
-If we test our API now, we'll see that we can GET both lists of topics and cards as well as individual topics and cards.
+And we'll need to add our JSON to the `/api/constants/index.js` file:
+
+```js
+// api/constants/index.js
+export const DB = {
+  topics: [
+    {
+      id: 1,
+      title: 'Literary Devices',
+    },
+    {
+      id: 2,
+      title: 'Famous Dogs',
+    },
+  ],
+  cards: [
+    {
+      id: 1,
+      topicId: 1,
+      word: 'Accumulation',
+      definition: 'Accumulation is derived from a Latin word which means "pile up". It is a stylistic device that is defined as a list of words which embody similar abstract or physical qualities or meanings with the intention to emphasize the common qualities that words hold. It is also an act of accumulating the scattered points. Accumulation examples are found in literary pieces and in daily conversations.',
+      example: 'Then shall our names,<br>Familiar in his mouth as household words,<br>Harry the King, Bedford and Exeter,<br>Warwick and Talbot, Salisbury and Gloucester,<br>Be in their flowing cups freshly remembered',
+      misses: 0,
+      hits: 0,
+    },
+    {
+      id: 2,
+      topicId: 1,
+      word: 'Ballad',
+      definition: 'The word Ballad is of French provenance. It is a type of poetry or verse which was basically used in dance songs in the ancient France. Later on, during the late 16th and 17th century, it spread over the majority of European nations. Owing to its popularity and emotional appeal, it remained a powerful tool for poets and lyricists to prepare music in the form of lyrical ballads and earn a handsome income from it.',
+      example: 'Day after day, day after day<br>We stuck nor breathe, nor motion;<br>As idle as a painted ship<br>Upon a painted ocean',
+      misses: 0,
+      hits: 0,
+    },
+    {
+      id: 3,
+      topicId: 1,
+      word: 'Cacophony',
+      definition: 'If we speak literally, cacophony points to a situation where there is a mixture of harsh and inharmonious sounds. In literature, however, the term refers to the use of words with sharp, harsh, hissing and unmelodious sounds primarily those of consonants to achieve desired results.',
+      example: 'I detest war because cause of war is always trivial.',
+      misses: 0,
+      hits: 0,
+    },
+    {
+      id: 4,
+      topicId: 1,
+      word: 'Dactyl',
+      definition: 'Dactyl is a metrical foot, or a beat in a line, containing three syllables in which first one is accented followed by second and third unaccented syllables (accented/unaccented/unaccented) in quantitative meter such as in the word "humanly." In dactyl, we put stress on first syllable and do not stress on second and third syllables, try to say it loud-"HU-man-ly." Dactyl originates from a Greek word dáktylos, which means finger, because it is like bones of human fingers, beginning from central long knuckle, which is followed by two short bones.',
+      example: '<b>Half</b> a league, <b>half</b> a league,<br><b>Half</b> a league <b>on</b>ward,<br><b>All</b> in the <b>val</b>ley of <b>Death</b> <br><b>Rode</b> the six <b>hun</b>dred.<br>"<b>For</b>ward, the <b>Light</b> Brigade!<br><b>Charge</b> for the <b>guns</b>!" he said.<br><b>In</b>to the <b>val</b>ley of <b>Death</b><br><b>Rode</b> the six <b>hun</b>dred.',
+      misses: 0,
+      hits: 0,
+    },
+    {
+      id: 5,
+      topicId: 1,
+      word: 'Elegy',
+      definition: 'Elegy is a form of literature which can be defined as a poem or song in the form of elegiac couplets, written in honor of someone deceased. It typically laments or mourns the death of the individual.',
+      example: 'My Captain does not answer, his lips are pale and still;<br>My father does not feel my arm, he has no pulse nor will;<br>The ship is anchor’d safe and sound, its voyage closed and done;<br>From fearful trip, the victor ship, comes in with object won;<br>Exult, O shores, and ring, O bells!<br>But I, with mournful tread,<br>Walk the deck my Captain lies,<br>Fallen cold and dead.',
+      misses: 0,
+      hits: 0,
+    },
+    {
+      id: 6,
+      topicId: 1,
+      word: 'Fable',
+      definition: 'The word fable is derived from a Latin word "fibula" which means a story that is a derivative of a word "fari" which means to speak. Fable is a literary device which can be defined as a concise and brief story intended to provide a moral lesson at the end.',
+      example: 'Now, comrades, what is the nature of this life of ours? Let us face it: our lives are miserable, laborious, and short. We are born, we are given just so much food as will keep the breath in our bodies… and the very instant that our usefulness has come to an end…. No animal in England knows the meaning of happiness or leisure after he is a year old. No animal in England is free. The life of an animal is misery and slavery….',
+      misses: 0,
+      hits: 0,
+    },
+    {
+      id: 7,
+      topicId: 1,
+      word: 'Genre',
+      definition: 'Genre means the type of art, literature or music characterized by a specific form, content and style. For example, literature has four main genres; poetry, drama, fiction and non-fiction. All of these genres have particular features and functions that distinguish them from one another. Hence, it is necessary on the part of readers to know which category of genre they are reading in order to understand the message it conveys, as they may have certain expectations prior to the reading concerned.',
+      example: '',
+      misses: 0,
+      hits: 0,
+    },
+    {
+      id: 8,
+      topicId: 1,
+      word: 'Haiku',
+      definition: 'A haiku poem has three lines, where the first and last lines have five moras, while the middle line has seven. The pattern in Japanese genre is 5-7-5. The mora is another name of a sound unit, which is like a syllable, but it is different from a syllable. As the moras cannot be translated into English, they are modified and syllables are used instead. The lines of such poems rarely rhyme with each other.',
+      example: 'Autumn moonlight-<br>a worm digs silently<br>into the chestnut.',
+      misses: 0,
+      hits: 0,
+    },
+    {
+      id: 9,
+      topicId: 1,
+      word: 'Iamb',
+      definition: 'An iamb is a literary device that can be defined as a foot containing unaccented and short syllables followed by a long and accented syllable in a single line of a poem (unstressed/stressed syllables). Two of Robert Frost`\'`s poems <i>Dust of Snow</i> and <i>The Road not Taken</i> are considered two of the most popular examples of iamb.',
+      example: 'Has <b>giv</b>en my <b>heart</b><br>A <b>change</b> of <b>mood</b><br>And <b>saved</b> some <b>part</b><br>Of a <b>day</b> I had <b>rued</b>.',
+      misses: 0,
+      hits: 0,
+    },
+    {
+      id: 10,
+      topicId: 1,
+      word: 'Jargon',
+      definition: 'Jargon is a literary term that is defined as a use of specific phrases and words by writers in a particular situation, profession or trade. These specialized terms are used to convey hidden meanings accepted and understood in that field. Jargon examples are found in literary and non-literary pieces of writing.',
+      example: 'Certain medications can cause or worsen nasal symptoms (especially congestion). These include the following: birth control pills, some drugs for high blood pressure (e.g., alpha blockers and beta blockers), antidepressants, medications for erectile dysfunction, and some medications for prostatic enlargement. If rhinitis symptoms are bothersome and one of these medications is used, ask the prescriber if the medication could be aggravating the condition.',
+      misses: 0,
+      hits: 0,
+    },
+  ],
+  count: 0,
+};
+```
+
+We'll probably need to restart our API server. If we test our API now, we'll see that we can GET both lists of [topics](http://localhost:3030/api/topics) and [cards](http://localhost:3030/api/cards) as well as individual [topics](http://localhost:3030/api/topics/1) and [cards](http://localhost:3030/api/cards/4). If we try a [non-existent topic](http://localhost:3030/api/topics/5) we should get a 404 Not Found error.
+
+So our REST JSON API server is actually quite simple.
+
+## The React/Redux application
+
+Let's take a look in the `app` folder next. Here we should see these folders and files:
+
+```
+components/
+constants/
+redux/
+server/
+test/
+utils/
+index.js
+routes.js
+```
+
+Let's take each one at a time. The first folder is the `components` folder. This, as before, is where our React components live. In this instance, the developer has made no distinction between components and containers. Instead, he has organized the components into three subfolders:
+
+```
+Modules/
+Pages/
+Root/
+```
+
+The Root folder is the root of our React app. It contains the following:
+
+```
+styles/
+    app.scss
+    normalize.css
+    typography.scss
+index.js
+```
+
+We won't bother with the CSS and Sass files. The `index.js` file has the code we'd expect, but with a few twists:
+
+```js
+// app/components/Root/index.js
+
 
 ## Running it all
-
-We'll skip the `app` folder for now and we'll come back to it. First, let's see how the configuration works.
 
 In the `bin` folder we have different configuration files for running the API server, the server-side rendering (SSR) server, the production server, the tests, and the webpack dev server. These are controlled by the configuration files in the `webpack` folder and by the scripts in the `package.json` file. Let's look at them one by one. Here are the available scripts (you can use `npm run` to see them all):
 

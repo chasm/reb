@@ -11,7 +11,7 @@ const path = require('path');
 const TARGET = process.env.npm_lifecycle_event;
 process.env.BABEL_ENV = TARGET;
 
-var devUrl;
+let devUrl;
 
 // location dist for dev and prod
 if (!global.ssr && process.env.NODE_ENV === 'development') {

@@ -47,3 +47,6 @@
 ::ffff:127.0.0.1 - - [12/May/2016:19:23:26 +0000] "GET /api/posts?testParam=test HTTP/1.1" 200 101 "http://localhost:3000/posts" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36"
 ::ffff:127.0.0.1 - - [12/May/2016:19:23:43 +0000] "GET /api/posts?testParam=test HTTP/1.1" 200 101 "-" "node-superagent/1.8.3"
 ::ffff:127.0.0.1 - - [12/May/2016:19:23:44 +0000] "GET /api/posts?testParam=test HTTP/1.1" 200 101 "http://localhost:3000/posts" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36"
+::ffff:127.0.0.1 - - [17/May/2016:08:56:00 +0000] "GET /api/posts?testParam=test HTTP/1.1" 200 101 "http://localhost:3000/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
+::1 - - [17/May/2016:08:56:31 +0000] "GET /api/posts HTTP/1.1" 200 101 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
+::1 - - [17/May/2016:08:56:32 +0000] "GET /favicon.ico HTTP/1.1" 404 24 "http://localhost:3030/api/posts" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
