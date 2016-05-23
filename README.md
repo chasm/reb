@@ -427,11 +427,6 @@ styles/
 index.js
 ```
 
-We won't bother with the CSS and Sass files. The `index.js` file has the code we'd expect, but with a few twists:
-
-```js
-// app/components/Root/index.js
-
 
 ## Running it all
 
@@ -697,5 +692,3 @@ The `/app` folder is organized by function.
         `propIs` is a neat little Ramda function that takes a *type*&mdash;e.g., Number, String, etc.&mdash;a key (here an action type), and an object in which that key might be found and returns true if the value of that key is the type passed, false otherwise. So in this instance, `propIs` checks to see if the value of the key equal to the `action.type` is a Function. If it is, then it calls that function and passes the state and action and returns whatever the function returns (that becomes the new state). If the key is not found or the value is not a Function, then it returns the state unchanged. This should sound familiar: it's what reducers do.
 
         Here we can ignore the state and the action. All we have to do is change the `spinnerAsyncPage` value from true to false and back again. Easy peasy. And that's how the app's async reducer works.
-
-TODO: Insert discussion of `bin` files here.
