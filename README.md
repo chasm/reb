@@ -427,6 +427,312 @@ styles/
 index.js
 ```
 
+What we care about is the `index.js` file. After the imports, it uses a `require` call to import the stylesheet for the app. Webpack does this for us.
+
+The tricky part is this code:
+
+```js
+// in app/components/Root/index.js
+@connect(
+  state => ({ ...state.app }),
+  dispatch => bindActionCreators({
+    ...actionCreators.app,
+  }, dispatch),
+)
+```
+
+This is an ES7 decorator. We need to use the `stage-0` babel presets to get this. Actually, I think we need to add more than that now as they were removed from babel 6. Yep. If you check the `package.json` file you'll see that `babel-plugin-transform-decorators-legacy` is listed as a dependency.
+
+What this does is exactly the same as this:
+
+```js
+// the old way to do it . . .
+const mapStateToProps = state => {
+  return { ...state.app }
+}
+
+const mapDispatchToProps = dispatch => bindActionCreators({
+  ...actionCreators.app,
+}, dispatch)
+
+export default connect(mapStateToProps, mapDispatchToProps)(Root)
+```
+
+Instead of creating the `mapStateToProps` and `mapDispatchToProps` functions as above, they are passed to `connect` as anonymous functions. And instead of calling connect with them and then immediately calling the function returned and passing it the Root component, we use the ``@connect()`` decorator syntax, placing it *immediately above* the class it decorates.
+
+The precise syntax for this language feature is still being argued, but annotations/decorators are very popular in many other languages, so I would expect that they will become common in JavaScript soon.
+
+The `bindActionCreators` method is provided by `redux`. It takes the action creators imported from `/app/redux/modules/index.js` and binds them to the `dispatch` function. This causes the action creators to be passed in as props to the Root container. Now we can call them as we do in the lifecycle methods:
+
+```js
+// in app/components/Root/index.js
+componentDidMount() {
+  const { hideSpinnerAsyncPage } = this.props;
+
+  hideSpinnerAsyncPage();
+}
+
+componentDidUpdate(prevProps) {
+  const { hideSpinnerAsyncPage } = this.props;
+
+  if (prevProps.spinnerAsyncPage === true) {
+    hideSpinnerAsyncPage();
+  }
+}
+```
+
+As you can see, this updates the Redux store to set the `spinnerAsyncPage` key to `false`:
+
+```js
+// in /app/redux/modules/app/app.js
+const initialState = {
+  spinnerAsyncPage: false,
+};
+
+export default createReducer({
+  ['HIDE_SPINNER_ASYNC_PAGE']: () => ({
+    spinnerAsyncPage: false,
+  }),
+}, initialState);
+
+export const hideSpinnerAsyncPage = () => ({
+  type: 'HIDE_SPINNER_ASYNC_PAGE',
+});
+```
+
+Now when we call `hideSpinnerAsyncPage()` in our Root component, it will dispatch this action to the reducer:
+
+```js
+{
+  type: 'HIDE_SPINNER_ASYNC_PAGE'
+}
+```
+
+Which sets `spinnerAsyncPage` to 'false'. In the `render` call below, this value (added to the props by this line: `state => ({ ...state.app })`) is used to determine whether to load the spinner or the page:
+
+```js
+// in app/components/Root/index.js
+{
+  spinnerAsyncPage
+    ? <Loading /> // show spinner for async component
+    : this.props.children &&
+        React.cloneElement(this.props.children, this.props)
+}
+```
+
+Another interesting JavaScript 2015 trick is the `static` keyword:
+
+```js
+// in app/components/Root/index.js
+static propTypes = {
+  location: PropTypes.object,
+  children: PropTypes.object,
+  params: PropTypes.object,
+  history: PropTypes.object,
+  spinnerAsyncPage: PropTypes.bool,
+  hideSpinnerAsyncPage: PropTypes.func,
+};
+```
+
+Note: the last I heard, the semicolon after the static assignment is required. The alternative is to assign the `propTypes` outside of the class declaration:
+
+```js
+Root.propTypes = {
+  ...
+}
+```
+
+If you're using a pure function, then outside is the way to go. I actually prefer it that way, as it puts the prop type declarations down at the bottom of the file out of the way. This is the same reason that I prefer to do the export at the very bottom of the file. That way I don't have to scan a whole file looking for exports&mdash;they are always the very last line in the file.
+
+The last thing of interest in the `/app/components/Root/index.js` file is this line:
+
+```js
+// in app/components/Root/index.js
+<Helmet
+  title="posts"
+/>
+```
+
+This uses [react-helmet](https://github.com/nfl/react-helmet) to "manage the `<head>`" of the document. This line will cause the `<title>` element in the HTML `<head>` section to be "posts".
+
+The Root component imports the Loading and Header components, so let's look at those next:
+
+```js
+// in app/components/Root/index.js
+import Loading from 'components/Modules/Loading';
+import Header from 'components/Modules/Header';
+```
+
+A quick check of these two files reveals that they are simple to understand. The Loader simply returns a spinner image, and the Header an unordered list with three `react-router` links. Nothing to see here, move along, move along.
+
+The Pages folder contains the About, AsyncExample, and Posts page components.
+
+The About page contains an interesting bit of code:
+
+```js
+// in app/components/Pages/About/index.js
+// Get window height if client (just for example)
+// Why need?
+// Just try remove __CLIENT__ check and start server-side-rendering
+const windowHeight = __CLIENT__ ? window.innerHeight : null;
+
+return (
+  <section className="about">
+    <Helmet
+      title="about"
+    />
+    <h1>Example page</h1>
+    window height = {windowHeight} (see __CLIENT__ condition in code)<br />
+
+    <img src="/static/images/example.jpg" />
+  </section>
+);
+```
+
+What's going on here? First we set a `windowHeight` constant, but we use a ternary operator and check the value of the `__CLIENT__` variable first. If `__CLIENT__` returns truthy, we set it to `window.innerHeight`; if it doesn't, we set it to null. Then we output the value in our page.
+
+What is the point of this? When the page is rendered server side, *there is no window because there is no browser*. So we can't measure `innerHeight`. Once the page is rendered on the client, however, and React finishes loading, it will re-render the page. This time `__CLIENT__` will by truthy and we'll get the value of the window's height.
+
+If we're *not* rendering server side, then this code won't render until it's in the browser and it will just work. For normal React without server-side rendering, we wouldn't bother with the `__CLIENT__` variable.
+
+Try removing the variable and just using `window.windowHeight` in the render method, and then running the server-side rendering to see what the difference is.
+
+We'll come back to the AsyncExample page when we discuss the redux middleware and the router.
+
+The Posts page is a bit more interesting. We have the same `@connect` decorator as in the Root container (which makes the Post component a container as well), but using the `posts` state and the `posts` action creators:
+
+```js
+// in app/components/Pages/Posts/index.js
+componentDidMount() {
+  console.log('props', this.props);
+  const { apiGetPosts } = this.props;
+
+  // Get posts from api server
+  // See in '/app/redux/modules/posts/posts.js' and  '/api/routes/posts.js'
+
+  apiGetPosts();
+}
+```
+
+Once the component is mounted, `apiGetPosts()` is called. This is an action creator from the `/app/redux/modules/posts/posts.js` file. The `posts` reducer handles three actions:
+
+- GET_POSTS_REQUEST when the AJAX request to the API is first sent. This sets the state's `items` key to an empty array.
+- GET_POSTS_SUCCESS called if the AJAX request returns successfully. This receives a payload of the Post items as JSON and sets the state's `item` key to the returned posts.
+- GET_POSTS_FAILURE console logs an error. Oddly, it does not return the state unchanged, which seems like an error in the code to me. But what do I know?
+
+```js
+// in app/redux/modules/posts/posts.js
+export default createReducer({
+  ['GET_POSTS_REQUEST']: state => ({
+    ...state,
+    items: [],
+  }),
+  ['GET_POSTS_SUCCESS']: (state, { payload }) => ({
+    ...state,
+    items: payload.posts,
+  }),
+  ['GET_POSTS_FAILURE']: () => console.log('error')
+}, initialState);
+```
+
+All of these are called by one action creator: `apiGetPosts`:
+
+```js
+// in app/redux/modules/posts/posts.js
+export const apiGetPosts = () => ({
+  mode: 'GET',
+  type: 'GET_POSTS',
+  url: 'posts',
+  data: { testParam: 'test' },
+  onSuccess: res => { console.log(res); },
+  onFailure: res => { console.log(res); },
+  callback: res => { console.log(res); }
+});
+```
+
+What on Earth does this do? It doesn't make any sense at all at first glance? Isn't this supposed to do some AJAX, then pass the response payload to the reducer so it can be inserted into the state? But there's none of that here. It's just returns an object with some data and a few methods.
+
+The trick is that this gets passed through the reducer *middleware*. When we get to the store, we'll see these lines:
+
+```js
+// in app/redux/store/configureStore.js
+const middlewares = [
+  apiMiddleware,
+  promiseMiddleware(),
+  thunkMiddleware,
+  !__PRODUCTION__ && __CLIENT__ && logger,
+].filter(Boolean);
+```
+
+See the `apiMiddleware`? That is imported from `/app/redux/middleware/api.js`. It looks like this:
+
+```js
+// in app/redux/middleware/api.js
+export const apiMiddleware = store => next => action => {
+  if (action.url) {
+
+    // Generate promise
+    const requestPromise = action.mode === 'GET'
+      ? request.get(API_URL + action.url)
+        .query({ // add query (if get)
+          ...action.data,
+        })
+      : request.post(API_URL + action.url)
+        .send({ // add body (if post)
+          ...action.data,
+        });
+
+    next({
+      type: action.type,
+      payload: {
+        promise: requestPromise
+          .promise()
+          .then(res => res.body)
+          .catch(res => {
+            const data = res.res;
+            if (action.callback) {
+              action.callback(data, store.dispatch);
+            }
+            if (action.onFailure) {
+              action.onFailure(data, store.dispatch);
+            }
+          })
+          .tap(res => {
+            if (action.callback) {
+              setTimeout(() => action.callback(res, store.dispatch), 10);
+            }
+          })
+          .tap(res => {
+            if (action.onSuccess) {
+              action.onSuccess && action.onSuccess(res, store.dispatch);
+            }
+          }),
+        data: { ...action.data },
+      },
+    });
+  } else {
+    next(action);
+  }
+};
+```
+
+Let's take it one bit at a time. See this line?
+
+```js
+export const apiMiddleware = store => next => action => {
+```
+
+This says that the apiMiddleware is a function that takes a `store` parameter and returns a *function* that takes a `next` parameter and returns yet another *function* that takes an `action` parameter and returns whatever is between the following braces. In fact, it doesn't "return" anything at all. The `next` parameter is a callback function and when the final function is called, it calls the next function.
+
+Looking at the body we can see that it does one thing if there is a truthy `url` key in the `action` object, and another if there isn't. If there is no `url` included in the action, then it just calls the `next` callback and passes it the action unchanged. So the apiMiddleware *only runs if it finds a URL in the action*. Got it? If it doesn't, the action gets passed on to the reducers unchanged.
+
+But if it *does* have a URL? Well, then we're going to use `superagent-bluebird-promise`, which is a lovely combination of the `superagent` AJAX library with the `bluebird` promise library. We can import it as `request`, and then call `get` and `post` methods just as we would on a regular `superagent` request (kind of like jQuery's `$.ajax`). But instead of passing in a callback, it returns a promise. Here we check wether the action calls for a GET or POST and then return the appropriate promise. For the GET we put the data to send in the query string; for the POST we put it in the body.
+
+Now we create a *new* Redux action, setting the `type` to the same `type` as was passed in, setting the `data` to be a copy of the `data` passed in, but adding as the payload the promise we made to make an AJAX call.
+
+But this *still* doesn't look like anything we'd want to send to the reducer. No worries, it gets passed through the `promiseMiddleware` next.
+
+(To be continued. The notes below are an older version and will be re-written soon, I hope.)
 
 ## Running it all
 
