@@ -1,5 +1,7 @@
 # React/Redux Intermediate final class
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/chasm/reb.svg)](https://greenkeeper.io/)
+
 **Server-side rendering and boilerplate/starter kits**
 
 Here are the notes for the final class.
